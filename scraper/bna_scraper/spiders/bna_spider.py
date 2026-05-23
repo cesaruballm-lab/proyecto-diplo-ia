@@ -62,6 +62,7 @@ class BnaCotizacionesSpider(scrapy.Spider):
                 venta_raw = row.css('td:nth-child(3)::text').get()
                 if compra_raw and venta_raw:
                     try:
+                        # Billetes usan formato AR: 1.375,00 → quitar punto de miles, coma a decimal
                         compra = float(compra_raw.strip().replace('.', '').replace(',', '.'))
                         venta = float(venta_raw.strip().replace('.', '').replace(',', '.'))
                         yield {
@@ -93,8 +94,9 @@ class BnaCotizacionesSpider(scrapy.Spider):
                 venta_raw = row.css('td:nth-child(3)::text').get()
                 if compra_raw and venta_raw:
                     try:
-                        compra = float(compra_raw.strip().replace('.', '').replace(',', '.'))
-                        venta = float(venta_raw.strip().replace('.', '').replace(',', '.'))
+                        # Divisas usan formato EN: 1394.0000 → el punto ya es el decimal, solo reemplazar coma por punto si existiera
+                        compra = float(compra_raw.strip().replace(',', '.'))
+                        venta = float(venta_raw.strip().replace(',', '.'))
                         yield {
                             "fecha_oficial_bna": fecha_oficial_divisas.strftime("%Y-%m-%d"),
                             "hora_actualizacion": hora_actualizacion,  # Se hereda la hora de billetes

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BNA Monitor - Dashboard de Administración</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="dashboard-body">
+    <!-- App Container -->
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon"></div>
+                <h2>BNA Monitor</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="rates-tab" id="btnRatesTab">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Cotizaciones</span>
+                </button>
+                <button class="nav-item" data-tab="clients-tab" id="btnClientsTab">
+                    <i class="fa-solid fa-key"></i>
+                    <span>API Keys Clientes</span>
+                </button>
+                <button class="nav-item" data-tab="logs-tab" id="btnLogsTab">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Logs de Auditoría</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-badge">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span id="adminUsername">admin</span>
+                </div>
+                <button class="btn-logout" id="btnLogoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-title">
+                    <h1 id="tabTitle">Monitoreo de Cotizaciones</h1>
+                    <p id="tabSubtitle">Historial y gestión de valores de compra y venta oficial del BNA.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="btnScrapeTrigger">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Scrapear BNA Ahora</span>
+                    </button>
+                    <button class="btn-primary" id="btnOpenCreateModal">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Cargar Cotización</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: Rates (Cotizaciones) -->
+            <section class="tab-pane active" id="rates-tab">
+                <div class="card card-filters">
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label for="filterMoneda">Moneda</label>
+                            <select id="filterMoneda">
+                                <option value="">Todas</option>
+                                <option value="USD">Dólar (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterTipo">Tipo</label>
+                            <select id="filterTipo">
+                                <option value="">Todos</option>
+                                <option value="billete">Billete</option>
+                                <option value="divisa">Divisa</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterFecha">Fecha de Registro</label>
+                            <input type="date" id="filterFecha">
+                        </div>
+                        <div class="filter-group filter-actions">
+                            <button class="btn-icon" id="btnResetFilters" title="Resetear Filtros">
+                                <i class="fa-solid fa-filter-circle-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-table">
+                    <div class="table-container">
+                        <table id="ratesTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha Registro</th>
+                                    <th>Fecha Oficial BNA</th>
+                                    <th>Hora Act. BNA</th>
+                                    <th>Moneda</th>
+                                    <th>Tipo</th>
+                                    <th>Compra</th>
+                                    <th>Venta</th>
+                                    <th>Origen</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ratesTableBody">
+                                <!-- Se rellena vía JS -->
+                                <tr>
+                                    <td colspan="9" class="td-loading">
+                                        <div class="spinner spinner-accent"></div>
+                                        <span>Cargando datos...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: API Keys Clientes -->
+            <section class="tab-pane hidden" id="clients-tab">
+                <div class="split-layout">
+                    <!-- Formulario de Creación -->
+                    <div class="card form-card">
+                        <h3>Registrar Nuevo Cliente</h3>
+                        <p class="section-desc">Genera una nueva API Key única para acceso programático.</p>
+                        
+                        <form id="apiKeyForm">
+                            <div class="form-group">
+                                <label for="clientName">Nombre del Cliente / Servicio</label>
+                                <input type="text" id="clientName" placeholder="Ej. API Cotizaciones SA" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clientEmail">Email de Contacto</label>
+                                <input type="email" id="clientEmail" placeholder="cliente@empresa.com" required>
+                            </div>
+                            <button type="submit" class="btn-primary btn-full">
+                                <i class="fa-solid fa-key"></i>
+                                <span>Generar API Key</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Listado de API Keys -->
+                    <div class="card list-card">
+                        <h3>Clientes Registrados</h3>
+                        <div class="table-container">
+                            <table id="apiKeysTable">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Email</th>
+                                        <th>Prefijo API Key</th>
+                                        <th>Estado</th>
+                                        <th>Creado el</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apiKeysTableBody">
+                                    <tr>
+                                        <td colspan="6" class="td-loading">Cargando clientes...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: Logs de Auditoría -->
+            <section class="tab-pane hidden" id="logs-tab">
+                <div class="card card-table">
+                    <div class="card-header-row">
+                        <h3>Llamadas Recientes de Clientes (Últimos 100 registros)</h3>
+                        <button class="btn-secondary btn-small" id="btnRefreshLogs">
+                            <i class="fa-solid fa-arrows-rotate"></i> Actualizar Logs
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="logsTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha / Hora</th>
+                                    <th>Cliente</th>
+                                    <th>Email</th>
+                                    <th>Método</th>
+                                    <th>Endpoint</th>
+                                    <th>IP Origen</th>
+                                    <th>Código HTTP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td colspan="7" class="td-loading">Cargando logs de auditoría...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Cargar / Editar Cotización -->
+    <div class="modal-backdrop hidden" id="rateModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Cargar Cotización Manual</h3>
+                <button class="btn-close" id="btnCloseRateModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="rateForm">
+                <input type="hidden" id="rateId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rateMoneda">Moneda</label>
+                        <select id="rateMoneda" required>
+                            <option value="USD">Dólar (USD)</option>
+                            <option value="EUR">Euro (EUR)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateTipo">Tipo</label>
+                        <select id="rateTipo" required>
+                            <option value="billete">Billete</option>
+                            <option value="divisa">Divisa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rateFechaRegistro">Fecha Registro (Hoy/Bache)</label>
+                        <input type="date" id="rateFechaRegistro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateFechaOficial">Fecha Oficial BNA</label>
+                        <input type="date" id="rateFechaOficial" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rateHora">Hora Actualización BNA</label>
+                    <input type="text" id="rateHora" placeholder="Ej: 17:02 o 15:00" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rateCompra">Valor Compra</label>
+                        <input type="number" id="rateCompra" step="0.0001" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateVenta">Valor Venta</label>
+                        <input type="number" id="rateVenta" step="0.0001" min="0" placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelRateModal">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSaveRate">
+                        <span>Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Mostrar API Key recién creada -->
+    <div class="modal-backdrop hidden" id="keyRevealModal">
+        <div class="modal-card modal-secure">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-shield-halved text-success"></i> API Key Generada Exitosamente</h3>
+            </div>
+            <div class="modal-body text-center">
+                <p class="warning-text">
+                    <strong>IMPORTANTE:</strong> Por motivos de seguridad, esta clave se mostrará **SOLO UNA VEZ**. Copia la clave ahora y guárdala en un lugar seguro. No podrás visualizarla de nuevo.
+                </p>
+                
+                <div class="key-box">
+                    <span id="revealedApiKey">bna_live_...</span>
+                    <button class="btn-copy" id="btnCopyKey" title="Copiar al portapapeles">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div class="client-info-box">
+                    <p><strong>Cliente:</strong> <span id="revealedClientName">Cliente</span></p>
+                    <p><strong>Prefijo:</strong> <span id="revealedPrefix">bna_live_xxxx</span></p>
+                </div>
+            </div>
+            <div class="modal-footer justify-center">
+                <button type="button" class="btn-primary" id="btnConfirmKeyReveal">He copiado la clave</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- JavaScript Controller -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

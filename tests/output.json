@@ -1,0 +1,6 @@
+[
+{"fecha_oficial_bna": "2026-05-22", "hora_actualizacion": "17:02", "moneda": "USD", "tipo": "billete", "compra": 1375.0, "venta": 1425.0},
+{"fecha_oficial_bna": "2026-05-22", "hora_actualizacion": "17:02", "moneda": "EUR", "tipo": "billete", "compra": 1480.0, "venta": 1540.0},
+{"fecha_oficial_bna": "2026-05-22", "hora_actualizacion": "17:02", "moneda": "USD", "tipo": "divisa", "compra": 1394.0, "venta": 1403.0},
+{"fecha_oficial_bna": "2026-05-22", "hora_actualizacion": "17:02", "moneda": "EUR", "tipo": "divisa", "compra": 1512.0, "venta": 1518.0}
+]

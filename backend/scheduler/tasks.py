@@ -16,12 +16,18 @@ def run_scrapy_spider():
     """
     print("=== [Scheduler] Iniciando ejecución del Scraper BNA ===")
     try:
+        env = os.environ.copy()
+        current_pythonpath = env.get("PYTHONPATH", "")
+        runtime_pythonpath = os.pathsep.join(sys.path)
+        env["PYTHONPATH"] = runtime_pythonpath if not current_pythonpath else f"{current_pythonpath}{os.pathsep}{runtime_pythonpath}"
+
         process = subprocess.Popen(
             [sys.executable, "-m", "scrapy", "crawl", "bna_cotizaciones"],
             cwd=SCRAPER_DIR,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            env=env
         )
 
         stdout, stderr = process.communicate()

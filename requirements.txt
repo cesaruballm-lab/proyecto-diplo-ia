@@ -5,6 +5,7 @@ supabase>=2.4.0
 apscheduler>=3.10.4
 pyjwt>=2.8.0
 python-multipart>=0.0.9
+python-dotenv>=1.0.0
 pytz>=2024.1
 pydantic>=2.6.4
 pydantic-settings>=2.2.1

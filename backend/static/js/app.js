@@ -14,23 +14,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabPanes = document.querySelectorAll(".tab-pane");
     const tabTitle = document.getElementById("tabTitle");
     const tabSubtitle = document.getElementById("tabSubtitle");
-    
+
     // Botones de acción generales
     const btnScrapeTrigger = document.getElementById("btnScrapeTrigger");
     const btnOpenCreateModal = document.getElementById("btnOpenCreateModal");
     const btnLogoutBtn = document.getElementById("btnLogoutBtn");
-    
+
     // Tablas bodies
     const ratesTableBody = document.getElementById("ratesTableBody");
     const apiKeysTableBody = document.getElementById("apiKeysTableBody");
     const logsTableBody = document.getElementById("logsTableBody");
-    
+
     // Filtros
     const filterMoneda = document.getElementById("filterMoneda");
     const filterTipo = document.getElementById("filterTipo");
     const filterFecha = document.getElementById("filterFecha");
     const btnResetFilters = document.getElementById("btnResetFilters");
-    
+
     // Modal Cotizaciones
     const rateModal = document.getElementById("rateModal");
     const rateForm = document.getElementById("rateForm");
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rateHora = document.getElementById("rateHora");
     const rateCompra = document.getElementById("rateCompra");
     const rateVenta = document.getElementById("rateVenta");
-    
+
     // Modal Revelación de Key
     const keyRevealModal = document.getElementById("keyRevealModal");
     const revealedApiKey = document.getElementById("revealedApiKey");
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const revealedPrefix = document.getElementById("revealedPrefix");
     const btnCopyKey = document.getElementById("btnCopyKey");
     const btnConfirmKeyReveal = document.getElementById("btnConfirmKeyReveal");
-    
+
     // Formularios
     const apiKeyForm = document.getElementById("apiKeyForm");
     const clientName = document.getElementById("clientName");
@@ -65,18 +65,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const container = document.getElementById("toastContainer");
         const toast = document.createElement("div");
         toast.className = `toast toast-${type}`;
-        
+
         let icon = "fa-circle-info";
         if (type === "success") icon = "fa-circle-check";
         if (type === "error") icon = "fa-circle-exclamation";
-        
+
         toast.innerHTML = `
             <i class="fa-solid ${icon}"></i>
             <span>${message}</span>
         `;
-        
+
         container.appendChild(toast);
-        
+
         // Remover después de 3.5 segundos
         setTimeout(() => {
             toast.style.animation = "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards";
@@ -106,10 +106,10 @@ document.addEventListener("DOMContentLoaded", () => {
     navItems.forEach(item => {
         item.addEventListener("click", () => {
             const targetTab = item.getAttribute("data-tab");
-            
+
             navItems.forEach(nav => nav.classList.remove("active"));
             item.classList.add("active");
-            
+
             tabPanes.forEach(pane => {
                 if (pane.id === targetTab) {
                     pane.classList.remove("hidden");
@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const badgeMoneda = rate.moneda === "USD" ? "badge-usd" : "badge-eur";
             const badgeTipo = rate.tipo === "billete" ? "badge-billete" : "badge-divisa";
             const badgeOrigen = rate.origen === "scraped" ? "badge-scraped" : "badge-manual";
-            
+
             // Formatear fechas para mejor visualización
             const fRegistro = formatDate(rate.fecha_registro);
             const fOficial = formatDate(rate.fecha_oficial_bna);
@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
     filterMoneda.addEventListener("change", renderRates);
     filterTipo.addEventListener("change", renderRates);
     filterFecha.addEventListener("change", renderRates);
-    
+
     btnResetFilters.addEventListener("click", () => {
         filterMoneda.value = "";
         filterTipo.value = "";
@@ -259,16 +259,16 @@ document.addEventListener("DOMContentLoaded", () => {
         rateId.value = "";
         rateForm.reset();
         modalTitle.textContent = "Cargar Cotización Manual";
-        
+
         const hoy = new Date().toISOString().split('T')[0];
         rateFechaRegistro.value = hoy;
         rateFechaOficial.value = hoy;
         rateHora.value = new Date().toLocaleTimeString("es-AR", {hour: '2-digit', minute:'2-digit'});
-        
+
         rateFechaRegistro.disabled = false; // Permitir setear baches en carga manual
         rateMoneda.disabled = false;
         rateTipo.disabled = false;
-        
+
         rateModal.classList.remove("hidden");
     });
 
@@ -282,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Guardar / Editar Cotización
     rateForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const payload = {
             fecha_registro: rateFechaRegistro.value,
             fecha_oficial_bna: rateFechaOficial.value,
@@ -343,7 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.deleteRate = async function(id) {
         if (!confirm("¿Está seguro de que desea eliminar esta cotización permanentemente?")) return;
-        
+
         try {
             const res = await apiFetch(`/api/admin/cotizaciones/${id}`, { method: "DELETE" });
             const data = await res.json();
@@ -362,24 +362,21 @@ document.addEventListener("DOMContentLoaded", () => {
     btnScrapeTrigger.addEventListener("click", async () => {
         btnScrapeTrigger.disabled = true;
         btnScrapeTrigger.querySelector("i").classList.add("fa-spin");
-        
+
         try {
             const res = await apiFetch("/api/admin/scrape/trigger", { method: "POST" });
             const data = await res.json();
             if (res.ok && data.status === "success") {
-                showToast("Scraper iniciado en segundo plano. Actualizando datos...", "success");
-                
-                // Hacer pollings automáticos cada 3 segundos durante 9 segundos
-                let polls = 0;
-                const interval = setInterval(() => {
-                    fetchRates();
-                    polls++;
-                    if (polls >= 3) {
-                        clearInterval(interval);
-                        btnScrapeTrigger.disabled = false;
-                        btnScrapeTrigger.querySelector("i").classList.remove("fa-spin");
-                    }
-                }, 3000);
+                console.group("Scraper trigger result");
+                console.log("Scraper stdout:", data.stdout);
+                console.log("Scraper stderr:", data.stderr);
+                console.groupEnd();
+
+                showToast("Scraper ejecutado y completado. Actualizando datos...", "success");
+
+                await fetchRates();
+                btnScrapeTrigger.disabled = false;
+                btnScrapeTrigger.querySelector("i").classList.remove("fa-spin");
             } else {
                 showToast(data.detail || "Error al disparar el scraper.", "error");
                 btnScrapeTrigger.disabled = false;
@@ -419,10 +416,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const badgeStatus = key.activo ? "badge-active" : "badge-inactive";
             const textStatus = key.activo ? "Activo" : "Revocado";
             const fechaCreacion = new Date(key.created_at).toLocaleDateString("es-AR") + " " + new Date(key.created_at).toLocaleTimeString("es-AR", {hour:'2-digit', minute:'2-digit'});
-            
+
             // Botón deshabilitado si ya está revocado
-            const actionBtn = key.activo 
-                ? `<button class="btn-danger" onclick="window.revokeKey('${key.id}')" title="Revocar Clave">Revocar</button>` 
+            const actionBtn = key.activo
+                ? `<button class="btn-danger" onclick="window.revokeKey('${key.id}')" title="Revocar Clave">Revocar</button>`
                 : `<span class="text-dimmed"><i class="fa-solid fa-ban"></i> Sin acceso</span>`;
 
             return `
@@ -441,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Registrar nuevo cliente
     apiKeyForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const payload = {
             cliente_nombre: clientName.value,
             cliente_email: clientEmail.value
@@ -458,13 +455,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (res.ok && data.status === "success") {
                 showToast("API Key generada con éxito.", "success");
                 apiKeyForm.reset();
-                
+
                 // Mostrar modal de revelación segura de clave única
                 revealedApiKey.textContent = data.api_key_completa;
                 revealedClientName.textContent = data.cliente_nombre;
                 revealedPrefix.textContent = data.prefix;
                 keyRevealModal.classList.remove("hidden");
-                
+
                 fetchApiKeys();
             } else {
                 showToast(data.detail || "Error al crear la API Key.", "error");
@@ -491,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Revocar API Key
     window.revokeKey = async function(id) {
         if (!confirm("¿Está seguro de que desea revocar el acceso a este cliente? Esta acción no se puede deshacer y bloqueará las consultas inmediatamente.")) return;
-        
+
         try {
             const res = await apiFetch(`/api/admin/api-keys/${id}`, { method: "DELETE" });
             const data = await res.json();
@@ -533,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Formatear fecha y hora local
             const dateObj = new Date(log.created_at);
             const fechaFormateada = dateObj.toLocaleDateString("es-AR") + " " + dateObj.toLocaleTimeString("es-AR", {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-            
+
             // Resolver nombre cliente
             const cliente = log.api_keys ? log.api_keys.cliente_nombre : `<em class="text-danger">Clave Inválida</em>`;
             const email = log.api_keys ? log.api_keys.cliente_email : "-";

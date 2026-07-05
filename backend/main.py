@@ -44,13 +44,28 @@ def write_api_log_to_db(api_key_id: str, endpoint: str, metodo: str, ip_address:
 
 # --- Manejador de Ciclo de Vida ---
 
+def should_enable_scheduler() -> bool:
+    """Determina si el scheduler debe arrancar en este entorno."""
+    # En Vercel, no hay garantía de que el proceso se mantenga vivo.
+    if os.getenv("VERCEL"):
+        return False
+    return os.getenv("ENABLE_SCHEDULER", "true").lower() in ("1", "true", "yes")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Inicializar el scheduler al arrancar (con scrapeo inicial activado)
-    init_scheduler(run_on_startup=True)
+    scheduler_enabled = should_enable_scheduler()
+    scheduler_running = False
+
+    if scheduler_enabled:
+        init_scheduler(run_on_startup=True)
+        scheduler_running = True
+    else:
+        print("[Scheduler] Scheduler deshabilitado en este entorno.")
+
     yield
-    # Apagar el scheduler al cerrar el servidor
-    scheduler.shutdown()
+
+    if scheduler_running:
+        scheduler.shutdown()
 
 # --- Configuración de la App ---
 
@@ -128,7 +143,7 @@ async def audit_and_auth_middleware(request: Request, call_next):
 
     # 4. Registrar log exitoso/respuesta final en segundo plano
     await run_in_threadpool(write_api_log_to_db, api_key_id, endpoint, metodo, ip_address, response.status_code)
-    
+
     return response
 
 # --- Inclusión de Routers ---

@@ -1,3 +1,7 @@
+import os
+
+import os
+
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
@@ -57,7 +61,7 @@ def login(payload: LoginPayload, response: Response):
             max_age=120 * 60  # 2 horas
         )
         return {"status": "success", "message": "Autenticación exitosa"}
-    
+
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Usuario o contraseña incorrectos."
@@ -91,7 +95,7 @@ def create_cotizacion(payload: CotizacionCreate, username: str = Depends(get_cur
     # Normalizar valores
     moneda = payload.moneda.upper().strip()
     tipo = payload.tipo.lower().strip()
-    
+
     if moneda not in ["USD", "EUR"] or tipo not in ["billete", "divisa"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -184,7 +188,7 @@ def list_api_keys(username: str = Depends(get_current_admin)):
 @router.post("/api-keys")
 def create_api_key_endpoint(payload: ApiKeyCreate, username: str = Depends(get_current_admin)):
     full_key, prefix, api_key_hash = generate_new_api_key()
-    
+
     data = {
         "cliente_nombre": payload.cliente_nombre.strip(),
         "cliente_email": payload.cliente_email.strip(),
@@ -244,11 +248,42 @@ def list_logs(username: str = Depends(get_current_admin)):
 
 # 11. Disparar Scraper Manualmente
 @router.post("/scrape/trigger")
-def trigger_scrape(username: str = Depends(get_current_admin)):
-    from backend.scheduler.tasks import trigger_scraping
+def trigger_scrape(request: Request):
+    from backend.scheduler.tasks import trigger_scraping_sync
+
+    cron_token = request.headers.get("X-Cron-Token") or request.query_params.get("cron_token")
+    configured_cron_token = os.getenv("CRON_TRIGGER_TOKEN")
+    is_cron_call = bool(cron_token and configured_cron_token and cron_token == configured_cron_token)
+    is_admin_call = False
+
     try:
-        trigger_scraping()
-        return {"status": "success", "message": "Scraper ejecutándose en segundo plano."}
+        get_current_admin(request)
+        is_admin_call = True
+    except HTTPException:
+        is_admin_call = False
+
+    if not (is_admin_call or is_cron_call):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autorizado. Se requiere sesión administrativa o token de cron válido."
+        )
+
+    try:
+        result = trigger_scraping_sync()
+        if result["returncode"] != 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al ejecutar el scraper: {result['stderr'] or 'Sin salida de error.'}",
+            )
+
+        return {
+            "status": "success",
+            "message": "Scraper ejecutado y completado.",
+            "stdout": result["stdout"],
+            "stderr": result["stderr"]
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -176,11 +176,23 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=tu_contraseña_segura_aqui
 
 JWT_SECRET_KEY=genera_una_clave_aleatoria_larga_aqui
+CRON_TRIGGER_TOKEN=mi_token_secreto_para_cron
 ```
 
 > ⚠️ Usar la **Service Role Key** de Supabase (no la anon key), ya que el backend necesita permisos de escritura sin restricciones de RLS.
 
-### 3. Crear las tablas en Supabase
+### 3. Configurar el cron remoto (Vercel / GitHub Actions)
+
+Si desplegás en un entorno serverless como Vercel, el scheduler embebido no es confiable. En su lugar, usa un cron externo que llame al endpoint protegido:
+
+- URL: `POST /api/admin/scrape/trigger`
+- Header: `X-Cron-Token: <CRON_TRIGGER_TOKEN>`
+
+También podés usar `?cron_token=<CRON_TRIGGER_TOKEN>` si el servicio de cron no admite headers.
+
+> El token de cron es solo para llamadas servidor-a-servidor. No lo expongas en el frontend.
+
+### 4. Crear las tablas en Supabase
 
 1. Ingresar al panel de Supabase → **SQL Editor** → **New Query**
 2. Pegar el contenido del archivo `supabase_schema.sql`
